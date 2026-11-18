@@ -1,0 +1,416 @@
+
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <header class="navbar">
+
+    <div class="brand">
+      <span class="brand-icon">📈</span>
+      <h1>FinSight AI</h1>
+    </div>
+
+    <nav>
+      <a href="#news">News</a>
+      <a href="#insights">Insights</a>
+      <span>Smarter Decisions</span>
+    </nav>
+
+    <div class="profile">A</div>
+
+  </header>
+
+
+  <main class="dashboard">
+
+    <!-- Search -->
+    <div class="search-bar">
+
+      <span>⌕</span>
+
+      <input
+        type="text"
+        placeholder="Search company or ticker..."
+        [(ngModel)]="searchText"
+        (input)="searchCompany()"
+      />
+
+    </div>
+
+
+    <div class="dashboard-grid">
+
+      <!-- LEFT: Search Results -->
+      <section class="panel results-panel">
+
+        <h2>Search Results</h2>
+
+        <p class="muted">
+          Find a company to explore
+        </p>
+
+        <div
+          class="company-card"
+          *ngFor="let company of searchResults"
+          (click)="openCompany(company.ticker)"
+        >
+
+          <div class="company-logo">
+
+            <img
+              *ngIf="company.logo"
+              [src]="company.logo"
+              [alt]="company.name"
+            />
+
+            <span *ngIf="!company.logo">
+              {{ company.name.charAt(0) }}
+            </span>
+
+          </div>
+
+          <div class="company-info">
+
+            <h3>{{ company.name }}</h3>
+
+            <p>Ticker: {{ company.ticker }}</p>
+
+            <p>Sector: {{ company.sector || 'N/A' }}</p>
+
+          </div>
+
+          <span class="arrow">›</span>
+
+        </div>
+
+        <p
+          *ngIf="searchText.trim() && searchResults.length === 0"
+          class="muted"
+        >
+          No companies found.
+        </p>
+
+      </section>
+
+
+      <!-- RIGHT: Company Dashboard -->
+      <section class="panel details-panel">
+
+        <ng-container
+          *ngIf="selectedCompany() as company; else emptyState"
+        >
+
+          <!-- Company Heading -->
+          <div class="company-heading">
+
+            <div class="company-logo large">
+
+              <img
+                *ngIf="company.logo"
+                [src]="company.logo"
+                [alt]="company.name"
+              />
+
+              <span *ngIf="!company.logo">
+                {{ company.name.charAt(0) }}
+              </span>
+
+            </div>
+
+            <div>
+
+              <h2>
+                {{ company.name }} ({{ company.ticker }})
+              </h2>
+
+              <p class="muted">
+                {{ company.sector || 'Industry information unavailable' }}
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <hr />
+
+
+          <!-- Company Information -->
+          <h3>About {{ company.name }}</h3>
+
+          <p class="muted">
+            {{ company.description || 'Company information and market updates.' }}
+          </p>
+
+          <p *ngIf="company.country">
+            <strong>Country:</strong> {{ company.country }}
+          </p>
+
+          <p *ngIf="company.exchange">
+            <strong>Exchange:</strong> {{ company.exchange }}
+          </p>
+
+          <p *ngIf="company.currency">
+            <strong>Currency:</strong> {{ company.currency }}
+          </p>
+
+          <p *ngIf="company.website">
+            <strong>Website:</strong>
+
+            <a
+              [href]="company.website"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ company.website }}
+            </a>
+
+          </p>
+
+          <p *ngIf="company.ipo">
+            <strong>IPO Date:</strong> {{ company.ipo }}
+          </p>
+
+          <p *ngIf="company.marketCapitalization">
+            <strong>Market Capitalization:</strong>
+
+            {{ company.marketCapitalization | number:'1.2-2' }} M USD
+          </p>
+
+
+          <hr />
+
+
+          <!-- Stock Overview -->
+          <div class="stock-card" id="insights">
+
+            <h3>Stock Overview</h3>
+
+            <p *ngIf="stockLoading" class="muted">
+              Loading stock data...
+            </p>
+
+            <p *ngIf="stockError" class="negative">
+              {{ stockError }}
+            </p>
+
+            <ng-container *ngIf="stock() as currentStock">
+
+              <ng-container *ngIf="!stockLoading && !stockError">
+
+                <div class="stock-price">
+                  {{ currentStock.c | number:'1.2-2' }}
+                  {{ company.currency || 'USD' }}
+                </div>
+
+                <p>
+                  Price Change:
+
+                  <span
+                    [class.positive]="currentStock.d > 0"
+                    [class.negative]="currentStock.d < 0"
+                  >
+                    {{ currentStock.d | number:'1.2-2' }}
+                  </span>
+                </p>
+
+                <p>
+                  Change (%):
+
+                  <span
+                    [class.positive]="currentStock.dp > 0"
+                    [class.negative]="currentStock.dp < 0"
+                  >
+                    {{ currentStock.dp | number:'1.2-2' }}%
+                  </span>
+                </p>
+
+                <p>
+                  Previous Close:
+                  {{ currentStock.pc | number:'1.2-2' }}
+                </p>
+
+                <p>
+                  Day High:
+                  {{ currentStock.h | number:'1.2-2' }}
+                </p>
+
+                <p>
+                  Day Low:
+                  {{ currentStock.l | number:'1.2-2' }}
+                </p>
+
+              </ng-container>
+
+            </ng-container>
+
+          </div>
+
+
+          <hr />
+
+
+          <!-- NEWS SENTIMENT TREND -->
+          <div class="sentiment-section">
+
+            <div class="section-heading">
+
+              <div>
+                <h2>News Sentiment Trend</h2>
+
+                <p class="muted">
+                  Daily positive, negative and neutral news activity
+                </p>
+              </div>
+
+              <span class="trend-icon">📊</span>
+
+            </div>
+
+
+            <!-- Loading -->
+            <p *ngIf="sentimentTrendLoading" class="muted">
+              Loading sentiment trend...
+            </p>
+
+
+            <!-- Error -->
+            <p *ngIf="sentimentTrendError" class="negative">
+              {{ sentimentTrendError }}
+            </p>
+
+
+            <!-- Chart -->
+            <ng-container *ngIf="sentimentTrend() as trend">
+
+              <div
+                class="chart-container"
+                *ngIf="trend.trend.length > 0; else noTrendData"
+              >
+
+                <canvas id="sentimentChart"></canvas>
+
+              </div>
+
+
+              <!-- No Data -->
+              <ng-template #noTrendData>
+
+                <div class="no-data">
+
+                  <span>📉</span>
+
+                  <h3>No trend data available</h3>
+
+                  <p class="muted">
+                    Sentiment data will appear here when news articles
+                    with sentiment labels are available.
+                  </p>
+
+                </div>
+
+              </ng-template>
+
+            </ng-container>
+
+          </div>
+
+
+          <hr />
+
+
+          <!-- AI News Insights -->
+          <div class="ai-insights-section">
+
+            <h2>AI-Powered News Insights</h2>
+
+            <p *ngIf="aiLoading" class="muted">
+              AI is analyzing company news...
+            </p>
+
+            <p *ngIf="aiError" class="negative">
+              {{ aiError }}
+            </p>
+
+            <div *ngIf="aiInsights()" class="ai-insights-card">
+
+              <p>{{ aiInsights() }}</p>
+
+            </div>
+
+            <p
+              *ngIf="!aiLoading && !aiError && !aiInsights()"
+              class="muted"
+            >
+              AI insights are not available yet.
+            </p>
+
+          </div>
+
+
+          <hr />
+
+
+          <!-- Company News -->
+          <div id="news">
+
+            <h2>Latest News</h2>
+
+            <div
+              class="news-card"
+              *ngFor="let article of news()"
+            >
+
+              <h3>{{ article.headline }}</h3>
+
+              <p class="muted">
+                {{ article.source }}
+              </p>
+
+              <p *ngIf="article.summary" class="muted">
+                {{ article.summary }}
+              </p>
+
+              <a
+                *ngIf="article.url"
+                [href]="article.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="read-article"
+              >
+                Read Article ↗
+              </a>
+
+            </div>
+
+            <p *ngIf="news().length === 0" class="muted">
+              No news available yet.
+            </p>
+
+          </div>
+
+        </ng-container>
+
+
+        <!-- Empty State -->
+        <ng-template #emptyState>
+
+          <div class="empty-state">
+
+            <h2>Explore a company</h2>
+
+            <p>
+              Search for a company and select a result to view its
+              details, stock data and news.
+            </p>
+
+          </div>
+
+        </ng-template>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
